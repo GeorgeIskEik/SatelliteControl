@@ -90,27 +90,28 @@ disp(['Norm squared of the EP vector component at 42 seconds: ', num2str(beta_no
 % Define the body angular velocity function
 B_omega = @(t) [sin(0.1*t); 0.01; cos(0.1*t)] * deg2rad(20); % B frame components
 
-% Define the EP differential kinematic equations
-matrix = [   -beta(2),        -beta(3),        -beta(4);
-               0,               beta(4),         -beta(3);
-             -beta(4),         0,               beta(2);
-               beta(3),        -beta(2),         0];
-ep_dynamics = @(t, beta) 0.5 * matrix * B_omega(t);
-
-% Initial EP vector
-beta_init = [0.408248; 0; 0.408248; 0.816497]; % Initial EP vector
-
 % Time span
 tspan = [0, 60]; % Time span from 0 to 60 seconds
 
-% Solve the differential equations using ode23
-[t, beta] = ode23(ep_dynamics, tspan, beta_init);
+% Initial EP vector
+beta_init = [0.408248; 0; 0.408248; 0.816497]; % Initial EP vector
+beta = beta_init;
+matrix = [-beta(2), -beta(3), -beta(4);
+           beta(1),-beta(4),beta(3);
+           beta(4), beta(1), -beta(2);
+           -beta(3), beta(2), beta(1)]
+% Define the EP differential kinematic equations
+ep_dynamics = @(t, beta) 0.5 * matrix * B_omega(t);
+
+
+% Solve the differential equations using ode45
+[t, beta] = ode45(ep_dynamics, tspan, beta_init);
 
 % Find the index corresponding to 42 seconds
 index_42s = find(t >= 42, 1);
 
 % Calculate the norm of the EP vector component at 42 seconds
-beta_norm_squared = beta(index_42s, 1)^2 + beta(index_42s, 2)^2 + beta(index_42s, 3)^2;
+beta_norm_squared = beta(index_42s, 2).^2 + beta(index_42s, 3).^2 + beta(index_42s, 4).^2;
 
 % Display the norm of the EP vector component at 42 seconds
 disp(['Norm squared of the EP vector component at 42 seconds: ', num2str(beta_norm_squared)]);

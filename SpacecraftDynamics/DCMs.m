@@ -127,11 +127,14 @@ BN = [0.774597; 0.258199; 0.516398; 0.258199];
 % quaternion1 F relative to B
 FB = [0.359211; 0.898027; 0.179605; 0.179605];
 
-FN = quatAdd(BN)'*FB
-
-rad2deg(2*acos(FN(1)))
-rad2deg(2*acos(-FN(1)))
-
+FN = quatAdd(FB)*BN
+% q = quatmultiply(FB',BN')
+% rad2deg(2*acos(q(1)))
+% rad2deg(2*acos(-q(1)))
+if rad2deg(2*acos(FN(1)))<0
+    FN(1) = -FN(1)
+end
+%possible answers :0.709738, 0.528365, -0.146008, -0.373204
 %%
 clear all
 
@@ -143,3 +146,64 @@ FB = quatAdd(FN)*NB
 rad2deg(2*acos(FB(1)))
 rad2deg(2*acos(-FB(1)))
   
+%%
+FN = [0.359211,0.898027,0.179605,0.179605];
+rho = FN(2)/FN(1)
+%%
+clear all
+q_bn = [0.1; 0.2; 0.3];
+dcm = crp2dcm(q_bn)
+
+%% DCM2CRP : DCM->EP->CRP
+clear all
+
+DCM = [0.333333 -0.666667 0.666667;
+       0.871795 0.487179 0.0512821;
+       -0.358974 0.564103 0.74359];
+% transform DCM to quaternions
+quat = DCM2EP(DCM)
+% extract CRP using the quat-CRP relationship
+q1 = quat(2)/quat(1);
+q2 = quat(3)/quat(1);
+q3 = quat(4)/quat(1);
+q = [q1,q2,q3]
+
+%% Subtraction FB
+clear all
+q_fn = [0.1; 0.2; 0.3];
+q_bn = [-0.3; 0.3; 0.1];
+q_bf = (q_bn-q_fn+cross(q_bn,q_fn))/(1+q_bn'*q_fn)
+
+%%
+q_nf = -q_fn
+dcm_f = crp2dcm(q_nf);
+dcm_i = crp2dcm(q_bn);
+dcm_bf = dcm_i*dcm_f;
+quat = DCM2EP(dcm_bf)
+
+q1 = quat(2)/quat(1);
+q2 = quat(3)/quat(1);
+q3 = quat(4)/quat(1);
+q = [q1,q2,q3]
+%%
+sig = [0.1, 0.2, 0.3];
+
+% flip to shadow set
+sig_s = -sig/norm(sig'*sig)
+
+%% Converting from MRP to DCM
+clear all
+sig =  [0.1; 0.2; 0.3];
+cdm = mrp2dcm(sig)
+% verified
+%% Map the DCM to the equivalent MRP set (short route)
+clear all
+DCM = [0.763314, 0.0946746, -0.639053
+        -0.568047, -0.372781, -0.733728
+        -0.307692, 0.923077, -0.230769];
+
+% Shepphard's method to go to quaternions
+quat = DCM2EP(DCM);
+sig = quat(2:4)/(1+quat(1));
+sig_s = -sig/norm(sig'*sig);
+% verified
